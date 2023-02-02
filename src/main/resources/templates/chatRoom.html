@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Chatting</title>
+  <!-- Bootstrap 5.2.3 Version -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+
+  <!-- JQuery -->
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="col-6">
+    <h2>채팅방 아이디 : [[${room.id}]]</h2>
+    <h3>접속한 유저이름 : [[${user.userName}]]</h3>
+  </div>
+  <div id="msgArea" class="col"></div>
+  <div class="col-6">
+    <div class="input-group mb-3">
+      <input type="text" id="msg" class="form-control">
+      <div class="input-group-append">
+        <button class="btn btn-outline-secondary" type="button" id="button-send">전송</button>
+      </div>
+    </div>
+  </div>
+  <div class="col-6"></div>
+</div>
+
+<!-- Bootstrap 5.2.3 Version -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+<script th:inline="javascript">
+  $(document).ready(function () {
+    let roomId = [[${room.id}]];
+    let userId = [[${user.id}]];
+
+    let sockJs = new SockJS("/stomp/chat");
+    let stomp = Stomp.over(sockJs);
+
+    stomp.connect({}, function () {
+      console.log("STOMP Connection")
+
+      stomp.subscribe("/sub/chat/room" + roomId, function (chat) {
+        let content = JSON.parse(chat.body);
+        console.log(chat)
+        console.log(chat.body)
+        let message = content.message;
+        let writerId = content.writerId;
+        let readCheck = content.readCheck;
+        let str = '';
+
+        if(writerId != userId){
+          str = "<div class='col-6'>";
+          str += "<div class='alert alert-secondary'>";
+          str += "<b>" + message + "</b>";
+          str += "</div></div>";
+        }
+        else{
+          str = "<div class='col-6'>";
+          str += "<div class='alert alert-warning'>";
+          str += "<b>" + message + "</b>";
+          str += "</div></div>";
+        }
+
+        $("#msgArea").append(str);
+      });
+
+      stomp.send('/pub/chat/enter', {}, JSON.stringify({roomId: roomId, writerId: userId}));
+    });
+
+    $("#button-send").on("click", function (e) {
+      let msg = document.getElementById("msg");
+
+      stomp.send('/pub/chat/message', {}, JSON.stringify({roomId: roomId, message: msg.value, writerId: userId}));
+      msg.value = '';
+    });
+  });
+</script>
+
+</body>
+</html>
+
+
