@@ -43,6 +43,7 @@ public class ChatController {
         User user = userRepository.findByUserName(principal.getName()).get();
         model.addAttribute("user", user);
         model.addAttribute("room", chatService.findRoomById(roomId));
+        model.addAttribute("chatMessages", chatService.findAllMessages(roomId));
         return "chatRoom";
     }
 }

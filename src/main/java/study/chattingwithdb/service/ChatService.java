@@ -64,7 +64,7 @@ public class ChatService {
     }
 
     public List<ChatMessage> findAllMessages(Long chatRoomId) {
-        return null;
+        return chatMessageRepository.findByChatRoomId(chatRoomId);
     }
 
 }

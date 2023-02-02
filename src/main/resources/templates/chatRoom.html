@@ -15,6 +15,16 @@
     <h2>채팅방 아이디 : [[${room.id}]]</h2>
     <h3>접속한 유저이름 : [[${user.userName}]]</h3>
   </div>
+  <div th:each="chatMessage : ${chatMessages}" class="col-6">
+    <div class="alert alert-secondary" th:if="${user.id != chatMessage.writerId}">
+      <b>[[${chatMessage.message}]]</b>
+    </div>
+    <div class="alert alert-warning" th:unless="${user.id != chatMessage.writerId}">
+      <b>[[${chatMessage.message}]]</b>
+    </div>
+    </li>
+  </div>
+
   <div id="msgArea" class="col"></div>
   <div class="col-6">
     <div class="input-group mb-3">
@@ -35,6 +45,8 @@
 
 <script th:inline="javascript">
   $(document).ready(function () {
+    $('html, body').scrollTop($('body').height());
+
     let roomId = [[${room.id}]];
     let userId = [[${user.id}]];
 
