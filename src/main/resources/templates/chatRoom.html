@@ -18,9 +18,11 @@
   <div th:each="chatMessage : ${chatMessages}" class="col-6">
     <div class="alert alert-secondary" th:if="${user.id != chatMessage.writerId}">
       <b>[[${chatMessage.message}]]</b>
+      [[${chatMessage.createdAt}]]
     </div>
     <div class="alert alert-warning" th:unless="${user.id != chatMessage.writerId}">
       <b>[[${chatMessage.message}]]</b>
+      [[${chatMessage.createdAt}]]
     </div>
     </li>
   </div>
@@ -30,7 +32,7 @@
     <div class="input-group mb-3">
       <input type="text" id="msg" class="form-control">
       <div class="input-group-append">
-        <button class="btn btn-outline-secondary" type="button" id="button-send">전송</button>
+        <button class="btn btn-outline-secondary" type="button" id="send-button">전송</button>
       </div>
     </div>
   </div>
@@ -58,23 +60,24 @@
 
       stomp.subscribe("/sub/chat/room" + roomId, function (chat) {
         let content = JSON.parse(chat.body);
-        console.log(chat)
-        console.log(chat.body)
         let message = content.message;
         let writerId = content.writerId;
         let readCheck = content.readCheck;
+        let createdAt = content.createdAt;
         let str = '';
 
         if(writerId != userId){
           str = "<div class='col-6'>";
           str += "<div class='alert alert-secondary'>";
           str += "<b>" + message + "</b>";
+          str += createdAt;
           str += "</div></div>";
         }
         else{
           str = "<div class='col-6'>";
           str += "<div class='alert alert-warning'>";
           str += "<b>" + message + "</b>";
+          str += createdAt;
           str += "</div></div>";
         }
 
@@ -84,12 +87,20 @@
       stomp.send('/pub/chat/enter', {}, JSON.stringify({roomId: roomId, writerId: userId}));
     });
 
-    $("#button-send").on("click", function (e) {
+    $("#send-button").on("click", function (e) {
       let msg = document.getElementById("msg");
-
       stomp.send('/pub/chat/message', {}, JSON.stringify({roomId: roomId, message: msg.value, writerId: userId}));
       msg.value = '';
     });
+
+    $("#msg").on("keyup", function (key) {
+      if(key.keyCode == 13) {
+        let msg = document.getElementById("msg");
+        stomp.send('/pub/chat/message', {}, JSON.stringify({roomId: roomId, message: msg.value, writerId: userId}));
+        msg.value = '';
+      }
+    })
+
   });
 </script>
 
