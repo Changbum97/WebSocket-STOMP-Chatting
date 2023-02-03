@@ -2,6 +2,8 @@ package study.chattingwithdb.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import study.chattingwithdb.domain.dto.CreateChatRoomRequest;
@@ -63,8 +65,8 @@ public class ChatService {
         template.convertAndSend("/sub/chat/room" + chatMessage.getRoomId(), chatMessage);
     }
 
-    public List<ChatMessage> findAllMessages(Long chatRoomId) {
-        return chatMessageRepository.findByChatRoomId(chatRoomId);
+    public Page<ChatMessage> findMessages(Long chatRoomId, Pageable pageable) {
+        return chatMessageRepository.findByChatRoomId(chatRoomId, pageable);
     }
 
 }
