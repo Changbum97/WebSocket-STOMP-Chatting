@@ -16,6 +16,7 @@ import study.chattingwithdb.repository.UserRepository;
 import study.chattingwithdb.service.ChatService;
 
 import java.security.Principal;
+import java.util.List;
 
 @Slf4j
 @Controller
@@ -49,17 +50,19 @@ public class ChatController {
         User user = userRepository.findByUserName(principal.getName()).get();
         model.addAttribute("user", user);
         model.addAttribute("room", chatService.findRoomById(roomId));
-        Page<ChatMessage> chatMessages = chatService.findMessages(roomId, pageable);
-        model.addAttribute("latestMessages", chatMessages);
-        model.addAttribute("noMoreMessages", chatMessages.getTotalElements() <= 10 ? true : false);
+        List<ChatMessage> notReadMessages = chatService.findNotReadMessages(roomId, principal.getName());
+        Page<ChatMessage> latestMessages = chatService.findLatestMessages(roomId, pageable, principal.getName());
+        model.addAttribute("notReadMessages", notReadMessages);
+        model.addAttribute("latestMessages", latestMessages);
+        model.addAttribute("noMoreMessages", latestMessages.getTotalElements() <= 10 ? true : false);
         return "chatRoom";
     }
 
     // 채팅 메세지 더 가져오기
     @GetMapping("/more/{roomId}")
     @ResponseBody
-    public Page<ChatMessage> getMoreMessages(@PathVariable Long roomId,
+    public Page<ChatMessage> getMoreMessages(@PathVariable Long roomId, Principal principal,
                                              @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC)Pageable pageable) {
-        return chatService.findMessages(roomId, pageable);
+        return chatService.findLatestMessages(roomId, pageable, principal.getName());
     }
 }
