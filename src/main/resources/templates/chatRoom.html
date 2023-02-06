@@ -91,9 +91,6 @@
         } else {
           if(content.targetMessageId == null) {
             let content = JSON.parse(chat.body);
-            console.log("======================")
-            console.log(content)
-            console.log("======================")
             makeHtml(content, true);
             $('html, body').scrollTop($('body').height());
           } else if(content.writerId == userId) {
@@ -137,12 +134,12 @@
         return
       }
       if($('html, body').scrollTop() == 0 && isLoading == false) {
-        isLoading = true;
         getMoreMessages();
+        isLoading = true;
       }
     });
 
-    function makeHtml(chatMessage, append) {
+     function makeHtml(chatMessage, append) {
       let message = chatMessage.message;
       let writerId = chatMessage.writerId;
       let readCheck = chatMessage.readCheck;
@@ -191,16 +188,15 @@
         success: function (chatMessages) {
           noMoreMessages = chatMessages.last;
           isLoading = false;
-
+          let temp = $('html, body').height();
           chatMessages.content.forEach(function (chatMessage) {
             makeHtml(chatMessage, false);
           });
 
-          // 새로 불러온 이전 글의 다음 글로 화면 이동
-          let offset = $("#msg" + firstMessageId).offset();
-          $('html, body').animate({scrollTop: offset.top}, 1000);
+          // 화면에 글 추가후 스크롤 이동
+          $('html, body').animate({scrollTop: $('html, body').height() - temp}, 1200);
           firstMessageId = chatMessages.content[chatMessages.content.length - 1].id;
-        }
+        },
       })
     }
 
