@@ -36,6 +36,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 
 <script th:inline="javascript">
+
   $(document).ready(function () {
 
     let roomId = [[${room.id}]];
@@ -90,6 +91,9 @@
         } else {
           if(content.targetMessageId == null) {
             let content = JSON.parse(chat.body);
+            console.log("======================")
+            console.log(content)
+            console.log("======================")
             makeHtml(content, true);
             $('html, body').scrollTop($('body').height());
           } else if(content.writerId == userId) {
@@ -100,7 +104,6 @@
 
       // 채팅방 입장시 실행
       stomp.send('/pub/chat/enter', {}, JSON.stringify({roomId: roomId, writerId: userId, messageType: "ENTER"}));
-
     });
 
     // 전송 버튼 클릭 시 메세지 전송
@@ -125,7 +128,7 @@
     let isLoading = false;
     let nowPage = 0;
     let noMoreMessages = latestMessages.last;
-    let firstMessageId = latestMessages.content[0].id;
+    let firstMessageId = latestMessages.content[latestMessages.content.length - 1].id;
 
     $(document).scroll(function () {
       if(isLoading == false && noMoreMessages == true) {
@@ -184,7 +187,7 @@
       nowPage ++;
       $.ajax({
         type: 'GET',
-        url: '/chat/more/' + roomId + '?page=' + nowPage,
+        url: '/chat/more/' + roomId + '?firstMessageId=' + firstMessageId,
         success: function (chatMessages) {
           noMoreMessages = chatMessages.last;
           isLoading = false;
@@ -195,9 +198,8 @@
 
           // 새로 불러온 이전 글의 다음 글로 화면 이동
           let offset = $("#msg" + firstMessageId).offset();
-          //$('html, body').scrollTop(offset.top);
           $('html, body').animate({scrollTop: offset.top}, 1000);
-          firstMessageId = chatMessages.content[9].id;
+          firstMessageId = chatMessages.content[chatMessages.content.length - 1].id;
         }
       })
     }

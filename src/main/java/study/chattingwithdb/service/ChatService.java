@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import study.chattingwithdb.domain.dto.ChatMessageDto;
 import study.chattingwithdb.domain.dto.CreateChatRoomRequest;
 import study.chattingwithdb.domain.entity.ChatMessage;
 import study.chattingwithdb.domain.entity.ChatRoom;
@@ -44,8 +45,6 @@ public class ChatService {
                 .builder()
                 .user1Id(user1Id)
                 .user2Id(user2Id)
-                .user1BeforeDisconnection(LocalDateTime.now())
-                .user2BeforeDisconnection(LocalDateTime.now())
                 .build();
 
         chatRoomRepository.save(chatRoom);
@@ -61,14 +60,16 @@ public class ChatService {
     }
 
     @Transactional
-    public void sendChatMessage(ChatMessage chatMessage) {
+    public void sendChatMessage(ChatMessageDto chatMessageDto) {
+        ChatMessage chatMessage = chatMessageDto.toEntity(chatRoomRepository.findById(chatMessageDto.getRoomId()).get());
         // 읽었다는 메세지가 아니고 입장 메세지도 아니면 저장
-        if(chatMessage.getMessageType().equals("TALK")) {
-            chatMessage.setReadCheck(false);
-            chatMessage.setChatRoom(chatRoomRepository.findById(chatMessage.getRoomId()).get());
-            chatMessageRepository.save(chatMessage);
-        } else if(chatMessage.getMessageType().equals("ENTER")) {
-            List<ChatMessage> chatMessages = chatMessageRepository.findByWriterIdNotAndReadCheck(chatMessage.getWriterId(), false);
+        if(chatMessageDto.getMessageType().equals("TALK")) {
+            ChatMessage saved = chatMessageRepository.save(chatMessage);
+            chatMessageDto.setCreatedAt(saved.getCreatedAt());
+            chatMessageDto.setId(saved.getId());
+            chatMessageDto.setReadCheck(saved.getReadCheck());
+        } else if(chatMessageDto.getMessageType().equals("ENTER")) {
+            List<ChatMessage> chatMessages = chatMessageRepository.findByWriterIdNotAndReadCheckAndChatRoomId(chatMessageDto.getWriterId(), false, chatMessageDto.getRoomId());
             for (ChatMessage beforeChatMessage :chatMessages) {
                 if(beforeChatMessage.getReadCheck() == true) {
                     break;
@@ -78,31 +79,20 @@ public class ChatService {
                 }
             }
         }
-        template.convertAndSend("/sub/chat/room" + chatMessage.getRoomId(), chatMessage);
+        template.convertAndSend("/sub/chat/room" + chatMessageDto.getRoomId(), chatMessageDto);
     }
 
-    public Page<ChatMessage> findLatestMessages(Long chatRoomId, Pageable pageable, String userName) {
-        User user = userRepository.findByUserName(userName).get();
-        ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId).get();
-        if(chatRoom.getUser1Id() == user.getId()) {
-            return chatMessageRepository.findByChatRoomIdAndCreatedAtBefore(chatRoomId, chatRoom.getUser1BeforeDisconnection(), pageable);
-        } else {
-            return chatMessageRepository.findByChatRoomIdAndCreatedAtBefore(chatRoomId, chatRoom.getUser2BeforeDisconnection(), pageable);
-        }
+    public Page<ChatMessage> findLatestMessages(Long chatRoomId, Long firstMessageId, Pageable pageable) {
+        return chatMessageRepository.findByChatRoomIdAndIdLessThan(chatRoomId, firstMessageId, pageable);
     }
 
     public List<ChatMessage> findNotReadMessages(Long chatRoomId, String userName) {
         User user = userRepository.findByUserName(userName).get();
-        ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId).get();
-        if(chatRoom.getUser1Id() == user.getId()) {
-            return chatMessageRepository.findByChatRoomIdAndCreatedAtAfter(chatRoomId, chatRoom.getUser1BeforeDisconnection());
-        } else {
-            return chatMessageRepository.findByChatRoomIdAndCreatedAtAfter(chatRoomId, chatRoom.getUser2BeforeDisconnection());
-        }
+        return chatMessageRepository.findByWriterIdNotAndReadCheckAndChatRoomId(user.getId(), false, chatRoomId);
     }
     @Transactional
-    public void readChatMessage(ChatMessage chatMessage) {
-        ChatMessage targetChatMessage = chatMessageRepository.findById(chatMessage.getTargetMessageId()).get();
+    public void readChatMessage(ChatMessageDto chatMessageDto) {
+        ChatMessage targetChatMessage = chatMessageRepository.findById(chatMessageDto.getTargetMessageId()).get();
         targetChatMessage.setReadCheck(true);
         chatMessageRepository.save(targetChatMessage);
     }

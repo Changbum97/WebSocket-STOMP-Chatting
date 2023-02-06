@@ -51,7 +51,14 @@ public class ChatController {
         model.addAttribute("user", user);
         model.addAttribute("room", chatService.findRoomById(roomId));
         List<ChatMessage> notReadMessages = chatService.findNotReadMessages(roomId, principal.getName());
-        Page<ChatMessage> latestMessages = chatService.findLatestMessages(roomId, pageable, principal.getName());
+
+        Long firstMessageId;
+        if(notReadMessages.size() == 0) {
+            firstMessageId = Long.MAX_VALUE;
+        } else {
+            firstMessageId = notReadMessages.get(0).getId();
+        }
+        Page<ChatMessage> latestMessages = chatService.findLatestMessages(roomId, firstMessageId, pageable);
         model.addAttribute("notReadMessages", notReadMessages);
         model.addAttribute("latestMessages", latestMessages);
         model.addAttribute("noMoreMessages", latestMessages.getTotalElements() <= 10 ? true : false);
@@ -61,8 +68,8 @@ public class ChatController {
     // 채팅 메세지 더 가져오기
     @GetMapping("/more/{roomId}")
     @ResponseBody
-    public Page<ChatMessage> getMoreMessages(@PathVariable Long roomId, Principal principal,
+    public Page<ChatMessage> getMoreMessages(@PathVariable Long roomId, @RequestParam Long firstMessageId,
                                              @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC)Pageable pageable) {
-        return chatService.findLatestMessages(roomId, pageable, principal.getName());
+        return chatService.findLatestMessages(roomId, firstMessageId, pageable);
     }
 }

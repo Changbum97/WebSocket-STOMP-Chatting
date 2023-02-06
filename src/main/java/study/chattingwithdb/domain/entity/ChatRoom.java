@@ -20,8 +20,6 @@ public class ChatRoom {
     private Long id;
     private Long user1Id;
     private Long user2Id;
-    private LocalDateTime user1BeforeDisconnection;
-    private LocalDateTime user2BeforeDisconnection;
 
     @OneToMany(mappedBy = "chatRoom")
     @JsonIgnore

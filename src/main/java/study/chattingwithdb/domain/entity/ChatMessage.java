@@ -23,9 +23,9 @@ public class ChatMessage {
     private String message;
     private Long writerId;
     private Boolean readCheck;   // 상대가 읽었는지 체크
-    private Long roomId;
-    private Long targetMessageId;
-    private String messageType; // ENTER, TALK, READ, DISCONNECTION
+    //private Long roomId;
+    //private Long targetMessageId;
+    //private String messageType; // ENTER, TALK, READ, DISCONNECTION
 
     @CreatedDate
     @Column(updatable = false)
