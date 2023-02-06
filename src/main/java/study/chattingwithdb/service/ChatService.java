@@ -62,9 +62,22 @@ public class ChatService {
 
     @Transactional
     public void sendChatMessage(ChatMessage chatMessage) {
-        chatMessage.setReadCheck(false);
-        chatMessage.setChatRoom(chatRoomRepository.findById(chatMessage.getRoomId()).get());
-        chatMessageRepository.save(chatMessage);
+        // 읽었다는 메세지가 아니고 입장 메세지도 아니면 저장
+        if(chatMessage.getMessageType().equals("TALK")) {
+            chatMessage.setReadCheck(false);
+            chatMessage.setChatRoom(chatRoomRepository.findById(chatMessage.getRoomId()).get());
+            chatMessageRepository.save(chatMessage);
+        } else if(chatMessage.getMessageType().equals("ENTER")) {
+            List<ChatMessage> chatMessages = chatMessageRepository.findByWriterIdNotAndReadCheck(chatMessage.getWriterId(), false);
+            for (ChatMessage beforeChatMessage :chatMessages) {
+                if(beforeChatMessage.getReadCheck() == true) {
+                    break;
+                } else {
+                    beforeChatMessage.setReadCheck(true);
+                    chatMessageRepository.save(beforeChatMessage);
+                }
+            }
+        }
         template.convertAndSend("/sub/chat/room" + chatMessage.getRoomId(), chatMessage);
     }
 
@@ -93,15 +106,4 @@ public class ChatService {
         targetChatMessage.setReadCheck(true);
         chatMessageRepository.save(targetChatMessage);
     }
-
-    @Transactional
-    public void disconnect(User user, Long roomId) {
-        ChatRoom chatRoom = chatRoomRepository.findById(roomId).get();
-        if(user.getId() == chatRoom.getId()) {
-            chatRoom.setUser1BeforeDisconnection(LocalDateTime.now());
-        } else {
-            chatRoom.setUser2BeforeDisconnection(LocalDateTime.now());
-        }
-    }
-
 }

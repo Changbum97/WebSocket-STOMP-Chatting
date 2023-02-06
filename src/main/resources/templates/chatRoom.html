@@ -44,23 +44,25 @@
     // 채팅방 입장 시 읽지 않은 메세지 전체 + 읽었던 최근 메세지 10개를 화면에 출력
     let latestMessages = [[${latestMessages}]];
     let notReadMessages = [[${notReadMessages}]];
-    if (latestMessages.content.length != 0) {
-      latestMessages.content.reverse().forEach(function (chatMessage) {
-        makeHtml(chatMessage, true);
-      });
-      console.log(notReadMessages)
-    }
+    let firstScrollToBottom = true;
     if(notReadMessages.length != 0) {
-      let str = "<span>------여기까지 읽었습니다------</span>";
-      $("#msgArea").append(str);
-      notReadMessages.forEach(function (chatMessage) {
-        makeHtml(chatMessage, true);
+      notReadMessages.reverse().forEach(function (chatMessage) {
+        makeHtml(chatMessage, false);
       });
-      let offset = $("#msg" + notReadMessages[0].id).offset();
-      $('html, body').scrollTop(offset.top - 30);
-    } else {
-      // 안 읽은 메세지가 없다면 채팅방 입장시 맨 아래로 스크롤
+      $("#msgArea").prepend("<span id='temp-span'>------여기까지 읽었습니다------</span>");
+      firstScrollToBottom = false;
+    }
+    if (latestMessages.content.length != 0) {
+      latestMessages.content.forEach(function (chatMessage) {
+        makeHtml(chatMessage, false);
+      });
+    }
+    // 전에 안 읽은 메세지가 없다면 채팅방 입장시 맨 아래로 스크롤
+    // 있다면 여기까지 읽었습니다로 스크롤
+    if(firstScrollToBottom == true) {
       $('html, body').scrollTop($('body').height());
+    } else {
+      $('html, body').scrollTop($("#temp-span").offset().top);
     }
 
     // SockJs, Stomp 연결
@@ -73,8 +75,27 @@
       // 메세지가 새로 생성되면 화면에 출력
       stomp.subscribe("/sub/chat/room" + roomId, function (chat) {
         let content = JSON.parse(chat.body);
-        makeHtml(content, true);
-        $('html, body').scrollTop($('body').height());
+
+        if(content.messageType == "ENTER") {
+          if(content.writerId != userId) {
+            // 다른 사람이 입장한 경우 => 메세지 읽음 처리
+            $( $("[name=read-check]").get().reverse() ).each(function (index, item) {
+              if($(item).text() == "읽지 않음") {
+                $(item).text("읽음");
+              } else {
+                return;
+              }
+            });
+          }
+        } else {
+          if(content.targetMessageId == null) {
+            let content = JSON.parse(chat.body);
+            makeHtml(content, true);
+            $('html, body').scrollTop($('body').height());
+          } else if(content.writerId == userId) {
+            $('#span' + content.targetMessageId).text("읽음");
+          }
+        }
       });
 
       // 채팅방 입장시 실행
@@ -132,13 +153,21 @@
         str += "<b>" + messageId + " : " + message + "</b>";
         str += "<br>" + createdAt;
         str += "</div></div>";
+        // 접속 중에 새 채팅이 온 경우
+        if(append == true) {
+          stomp.send('/pub/chat/read', {}, JSON.stringify({roomId: roomId, writerId: writerId, targetMessageId: messageId, messageType: "READ"}));
+        }
       }
       else{
         str = "<div class='col-6' id='msg" + messageId + "'>";
         str += "<div class='alert alert-warning'>";
         str += "<b>" + messageId + " : "  + message + "</b>";
         str += "<br>" + createdAt;
-        str += "<br><span>" + readCheck + "</span>";
+        if(readCheck == false) {
+          str += "<br><span id='span" + messageId + "' name='read-check'>읽지 않음</span>";
+        } else {
+          str += "<br><span id='span" + messageId + "' name='read-check'>읽음</span>";
+        }
         str += "</div></div>";
       }
       // append가 true이면 (새 메세지) 뒤에다 붙이고

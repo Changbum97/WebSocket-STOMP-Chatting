@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
-    Page<ChatMessage> findByChatRoomId(Long chatRoomId, Pageable pageable);
     List<ChatMessage> findByChatRoomIdAndCreatedAtAfter(Long chatRoomId, LocalDateTime createdAt);
     Page<ChatMessage> findByChatRoomIdAndCreatedAtBefore(Long chatRoomId, LocalDateTime createdAt, Pageable pageable);
+    List<ChatMessage> findByWriterIdNotAndReadCheck(Long writerId, Boolean readCheck);
 }
