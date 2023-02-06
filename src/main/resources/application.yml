@@ -1,3 +1,9 @@
+# 한글 깨지는 현상 방지
+server:
+  port: 8081
+  servlet:
+    encoding:
+      force-response: true
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
