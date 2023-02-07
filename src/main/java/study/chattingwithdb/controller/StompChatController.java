@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
 import study.chattingwithdb.domain.dto.ChatMessageDto;
-import study.chattingwithdb.domain.entity.ChatMessage;
 import study.chattingwithdb.service.ChatService;
 
 @Slf4j

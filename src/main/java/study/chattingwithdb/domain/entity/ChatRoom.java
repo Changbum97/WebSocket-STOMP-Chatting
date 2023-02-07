@@ -3,8 +3,7 @@ package study.chattingwithdb.domain.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
-import javax.persistence.*;
-import java.time.LocalDateTime;
+import javax.persistence.*;;
 import java.util.ArrayList;
 import java.util.List;
 

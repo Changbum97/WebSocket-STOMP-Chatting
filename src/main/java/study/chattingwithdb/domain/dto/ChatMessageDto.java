@@ -1,19 +1,12 @@
 package study.chattingwithdb.domain.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.annotation.CreatedDate;
 import study.chattingwithdb.domain.entity.ChatMessage;
 import study.chattingwithdb.domain.entity.ChatRoom;
-import study.chattingwithdb.domain.entity.User;
 
-import javax.persistence.Column;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import java.time.LocalDateTime;
 
 @Getter

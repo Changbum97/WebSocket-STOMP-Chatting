@@ -16,7 +16,6 @@ import study.chattingwithdb.repository.ChatRoomRepository;
 import study.chattingwithdb.repository.UserRepository;
 
 import javax.transaction.Transactional;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
